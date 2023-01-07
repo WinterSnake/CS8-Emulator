@@ -38,6 +38,11 @@ public class Console
         while ((_value = stream.ReadByte()) >= 0)
             this.RAM[this._ROMSTART + stream.Position - 1] = (byte)_value;
     }
+    public void Reset()
+    {
+        this._CPU.Reset(this._ROMSTART);
+        this._Display.Reset();
+    }
     public void SetKey(byte position, bool _set) => this.Inputs[position] = _set;
     public void Tick()
     {

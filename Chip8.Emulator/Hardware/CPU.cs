@@ -18,6 +18,16 @@ public class CPU
         this.ProgramCounter = startAddress;
     }
     /* Instance Methods */
+    public void Reset(ushort startAddress = 0x200)
+    {
+        this.ProgramCounter = startAddress;
+        this.AddressPointer = 0;
+        this.StackPointer = 0;
+        for (var i = 0; i < this.Stack.Length; ++i)
+            this.Stack[i] = 0;
+        for (var i = 0; i < this.Registers.Length; ++i)
+            this.Registers[i] = 0;
+    }
     public bool Tick(byte[] memory, bool[,] display, bool[] inputs)
     {
         bool drawFlag = false;
@@ -131,7 +141,6 @@ public class CPU
     public ushort AddressPointer { get; private set; } = 0;
     public byte StackPointer { get; private set; } = 0;
     public ushort[] Stack { get; private set; } = new ushort[16];
-    public bool DrawFlag { get; private set; } = false;
     /* Sub-Classes */
     private struct OpCode
     {
@@ -147,9 +156,9 @@ public class CPU
         public ushort Address { get { return (ushort)((this.Instruction & 0x0FFF) >>  0); } }
         public byte UpperByte { get { return (byte)  ((this.Instruction & 0xFF00) >>  8); } }
         public byte LowerByte { get { return (byte)  ((this.Instruction & 0x00FF) >>  0); } }
-        public byte UNibble   { get { return (byte)  ((this.Instruction & 0xF000) >> 12); } }
-        public byte XNibble   { get { return (byte)  ((this.Instruction & 0x0F00) >>  8); } }
-        public byte YNibble   { get { return (byte)  ((this.Instruction & 0x00F0) >>  4); } }
-        public byte LNibble   { get { return (byte)  ((this.Instruction & 0x000F) >>  0); } }
+        public byte   UNibble { get { return (byte)  ((this.Instruction & 0xF000) >> 12); } }
+        public byte   XNibble { get { return (byte)  ((this.Instruction & 0x0F00) >>  8); } }
+        public byte   YNibble { get { return (byte)  ((this.Instruction & 0x00F0) >>  4); } }
+        public byte   LNibble { get { return (byte)  ((this.Instruction & 0x000F) >>  0); } }
     }
 }
