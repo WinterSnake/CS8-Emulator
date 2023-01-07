@@ -40,6 +40,10 @@ public class Console
     public void Reset(bool resetROM = false)
     {
         this.CPU.Reset(this._ROMStartAddress);
+        // Inputs
+        for (var i = 0; i < this.Inputs.Length; ++i)
+            this.Inputs[i] = false;
+        // Memory
         if (!resetROM)
             return;
         for (var i = this._ROMStartAddress; i < this.Memory.Length; ++i)
