@@ -5,10 +5,10 @@
     Written By: Ryan Smith
 */
 #pragma warning disable CS0660, CS0661
+
 using System;
 
 namespace Emulators.Chip8;
-
 
 public class CPU
 {

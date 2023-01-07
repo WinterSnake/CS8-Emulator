@@ -5,8 +5,8 @@
     Written By: Ryan Smith
 */
 #pragma warning disable CA1416
-using System.Threading;
 
+using System.Threading;
 using Sharpie;
 using Sharpie.Backend;
 using Chip8 = Emulators.Chip8;
