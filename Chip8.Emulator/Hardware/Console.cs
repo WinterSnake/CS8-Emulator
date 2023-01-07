@@ -1,10 +1,10 @@
 /*
     Chip8 Emulator: Hardware Implementation
-    - Console
+    - Console    
 
     Written By: Ryan Smith
 */
-using System;
+
 using System.IO;
 
 namespace Emulators.Chip8;
@@ -12,14 +12,13 @@ namespace Emulators.Chip8;
 public class Console
 {
     /* Constructors */
-    public Console(Display display, ushort romStartAddress = 0x200)
+    public Console(ushort romStartAddress = 0x200)
     {
-        this._ROMSTART = romStartAddress;
-        this._CPU = new CPU(romStartAddress);
-        this._Display = display;
-        // Write FONTSET to RAM
+        this._ROMStartAddress = romStartAddress;
+        this.CPU = new CPU(romStartAddress);
+        // Write FONTSET to Memory
         for (var i = 0; i < Console.FONTSET.Length; ++i)
-            this.RAM[i] = Console.FONTSET[i];
+            this.Memory[i] = Console.FONTSET[i];
     }
     /* Instance Methods */
     public void LoadROM(byte[] bytes)
@@ -36,21 +35,22 @@ public class Console
     {
         int _value;
         while ((_value = stream.ReadByte()) >= 0)
-            this.RAM[this._ROMSTART + stream.Position - 1] = (byte)_value;
+            this.Memory[this._ROMStartAddress + stream.Position - 1] = (byte)_value;
     }
-    public void Reset()
+    public void Reset(bool resetROM = false)
     {
-        this._CPU.Reset(this._ROMSTART);
-        this._Display.Reset();
+        this.CPU.Reset(this._ROMStartAddress);
+        if (!resetROM)
+            return;
+        for (var i = this._ROMStartAddress; i < this.Memory.Length; ++i)
+            this.Memory[i] = 0;
     }
-    public void SetKey(byte position, bool _set) => this.Inputs[position] = _set;
+    public void SetKey(byte position, bool flag = false) => this.Inputs[position] = flag;
     public void Tick()
     {
-        bool drawFlag = this._CPU.Tick(this.RAM, this._Display.Buffer, this.Inputs);
-        if (drawFlag)
-            this._Display.Draw();
+        this.CPU.Tick(this.Memory, this.Inputs);
     }
-    /* Class Properties */
+    /* Static Properties */
     private readonly static byte[] FONTSET = {
         0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
         0x20, 0x60, 0x20, 0x20, 0x70, // 1
@@ -70,9 +70,8 @@ public class Console
         0xF0, 0x80, 0xF0, 0x80, 0x80  // F
     };
     /* Properties */
-    private readonly ushort _ROMSTART;
-    public readonly CPU _CPU;
-    public readonly Display _Display;
-    public readonly byte[] RAM = new byte[4096];
+    private readonly ushort _ROMStartAddress;
+    public readonly CPU CPU;
+    public readonly byte[] Memory = new byte[4096];
     public readonly bool[] Inputs = new bool[16];
 }

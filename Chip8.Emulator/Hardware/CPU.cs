@@ -10,13 +10,10 @@ using System;
 
 namespace Emulators.Chip8;
 
-public class CPU
+public sealed class CPU
 {
     /* Constructors */
-    public CPU(ushort startAddress = 0x200)
-    {
-        this.ProgramCounter = startAddress;
-    }
+    public CPU(ushort startAddress = 0x200) { this.ProgramCounter = startAddress; }
     /* Instance Methods */
     public void Reset(ushort startAddress = 0x200)
     {
@@ -28,23 +25,14 @@ public class CPU
         for (var i = 0; i < this.Registers.Length; ++i)
             this.Registers[i] = 0;
     }
-    public bool Tick(byte[] memory, bool[,] display, bool[] inputs)
+    public void Tick(byte[] memory, bool[] inputs)
     {
-        bool drawFlag = false;
-        ushort instruction = (ushort)((memory[this.ProgramCounter] << 8) + memory[this.ProgramCounter + 1]);
-        OpCode opcode = new OpCode(instruction);
-        // 00E0: clear
-        if (opcode == 0x00E0)
-        {
-            drawFlag = true;
-            for (var x = 0; x < display.GetLength(0); ++x)
-            {
-                for (var y = 0; y < display.GetLength(1); ++y)
-                    display[x, y] = false;
-            }
-        }
+        OpCode opcode = new OpCode(memory[this.ProgramCounter], memory[this.ProgramCounter + 1]);
+        this.ProgramCounter += 2;
+        // TODO: 00E0: clear
+        //if (opcode == 0x00E0) {}
         // 00EE: return
-        else if (opcode == 0x00EE)
+        if (opcode == 0x00EE)
         {
             // Handle stack underflow
             if (this.StackPointer <= 0)
@@ -54,7 +42,7 @@ public class CPU
         }
         // 1nnn: goto nnn
         else if (opcode.UNibble == 0x1)
-            this.ProgramCounter = (ushort)(opcode.Address - 2);
+            this.ProgramCounter = (ushort)(opcode.Address);
         // 2nnn: call nnn
         else if (opcode.UNibble == 0x2)
         {
@@ -62,7 +50,7 @@ public class CPU
             if (this.StackPointer >= this.Stack.Length)
                 throw new StackOverflowException();
             this.Stack[this.StackPointer++] = this.ProgramCounter;
-            this.ProgramCounter = (ushort)(opcode.Address - 2);
+            this.ProgramCounter = (ushort)(opcode.Address);
         }
         // 3xnn: Vx == nn
         else if (opcode.UNibble == 0x3)
@@ -97,7 +85,7 @@ public class CPU
         else if (opcode.UNibble == 0xA)
             this.AddressPointer = opcode.Address;
         // TODO: Dxyn: Display x=Vx ; y=Vy; width=8 ; height = n
-        else if (opcode.UNibble == 0xD) {}
+        //else if (opcode.UNibble == 0xD) {}
         // Ex9E: if (key[x])
         else if (opcode.UNibble == 0xE && opcode.LowerByte == 0x9E)
         {
@@ -132,8 +120,6 @@ public class CPU
         {
             throw new NotSupportedException($"Unknown OpCode found: [PC=0x{this.ProgramCounter.ToString("X4")}]: 0x{opcode}");
         }
-        this.ProgramCounter += 2;
-        return drawFlag;
     }
     /* Properties */
     public ushort ProgramCounter { get; private set; } = 0;
@@ -145,7 +131,7 @@ public class CPU
     private struct OpCode
     {
         /* Constructor */
-        public OpCode(ushort instruction) { this.Instruction = instruction; }
+        public OpCode(byte upperByte, byte lowerByte) { this.Instruction = (ushort)((upperByte << 8) | lowerByte); }
         /* Instance Methods */
         public override string ToString() => this.Instruction.ToString("X4");
         /* Static Methods */
