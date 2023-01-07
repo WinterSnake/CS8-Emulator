@@ -1,5 +1,6 @@
 /*
-    Chip8 Emulator
+    Chip8 Emulator: Debugging
+    - Frontend: None
 
     Written By: Ryan Smith
 */

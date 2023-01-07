@@ -1,5 +1,5 @@
 /*
-    Chip8 Emulator: Resources
+    Chip8 Emulator: Hardware Resource
     - Display
 
     Written By: Ryan Smith
@@ -13,6 +13,6 @@ namespace Emulators.Chip8
         /* Instance Methods */
         public virtual void Draw() { throw new NotImplementedException("Display.Draw()"); }
         /* Properties */
-        public bool[,] Buffer { get; private set; } = new bool[64, 32];
+        public readonly bool[,] Buffer = new bool[64, 32];
     }
 }

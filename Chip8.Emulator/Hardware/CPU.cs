@@ -1,6 +1,6 @@
 /*
     Chip8 Emulator: Hardware Implementations
-    Chip8 CPU
+    - CPU
 
     Written By: Ryan Smith
 */

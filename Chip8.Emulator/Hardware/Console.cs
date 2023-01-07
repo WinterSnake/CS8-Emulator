@@ -1,6 +1,6 @@
 /*
-    Chip8 Emulator: Resources
-    Chip8 Console
+    Chip8 Emulator: Hardware Implementation
+    - Console
 
     Written By: Ryan Smith
 */
@@ -68,7 +68,7 @@ namespace Emulators.Chip8
         private readonly ushort _ROMSTART;
         public readonly CPU _CPU;
         public readonly Display _Display;
-        public byte[] RAM { get; private set; } = new byte[4096];
-        public bool[] Inputs { get; private set; } = new bool[16];
+        public readonly byte[] RAM = new byte[4096];
+        public readonly bool[] Inputs = new bool[16];
     }
 }
