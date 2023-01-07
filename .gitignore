@@ -1,0 +1,14 @@
+# C#: Build
+bin/
+obj/
+**/bin/
+**/obj/
+
+# Editor: Vim
+.tmux-session
+
+# Editor: Visual Studio
+.vs/
+
+# ROMS
+ROMs
