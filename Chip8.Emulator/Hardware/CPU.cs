@@ -25,12 +25,19 @@ public sealed class CPU
         for (var i = 0; i < this.Registers.Length; ++i)
             this.Registers[i] = 0;
     }
-    public void Tick(byte[] memory, bool[] inputs)
+    public void Tick(byte[] memory, byte[,] graphicsBuffer, bool[] inputs)
     {
         OpCode opcode = new OpCode(memory[this.ProgramCounter], memory[this.ProgramCounter + 1]);
         this.ProgramCounter += 2;
-        // TODO: 00E0: clear
-        if (opcode == 0x00E0) {}
+        // 00E0: clear
+        if (opcode == 0x00E0)
+        {
+            for (var x = 0; x < graphicsBuffer.GetLength(0); ++x)
+            {
+                for (var y = 0; y < graphicsBuffer.GetLength(1); ++y)
+                    graphicsBuffer[x, y] = 0;
+            }
+        }
         // 00EE: return
         else if (opcode == 0x00EE)
         {

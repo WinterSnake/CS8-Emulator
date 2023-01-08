@@ -52,7 +52,7 @@ public class Console
     public void SetKey(byte position, bool flag = false) => this.Inputs[position] = flag;
     public void Tick()
     {
-        this.CPU.Tick(this.Memory, this.Inputs);
+        this.CPU.Tick(this.Memory, this.GFXBuffer, this.Inputs);
     }
     /* Static Properties */
     private readonly static byte[] FONTSET = {
@@ -77,5 +77,6 @@ public class Console
     private readonly ushort _ROMStartAddress;
     public readonly CPU CPU;
     public readonly byte[] Memory = new byte[4096];
+    public readonly byte[,] GFXBuffer = new byte[64, 32];
     public readonly bool[] Inputs = new bool[16];
 }
