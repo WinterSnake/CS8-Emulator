@@ -129,12 +129,40 @@ public sealed class CPU
             if (!inputs[opcode.XNibble])
                 this.ProgramCounter += 2;
         }
+        // Fx0A: wait for key press
+        else if (opcode.UNibble == 0xF && opcode.LowerByte == 0x0A)
+        {
+            bool success = false;
+            for (var i = 0; i < inputs.Length; ++i)
+            {
+                if (inputs[i])
+                {
+                    this.Registers[opcode.XNibble] = (byte)i;
+                    success = true;
+                }
+            }
+            if (!success)
+                this.ProgramCounter -= 2;
+        }
+        // Fx07: V[x] = delay
+        else if (opcode.UNibble == 0xF && opcode.LowerByte == 0x07)
+            this.Registers[opcode.XNibble] = this.DelayTimer;
+        // Fx15: delay = V[x]
+        else if (opcode.UNibble == 0xF && opcode.LowerByte == 0x15)
+            this.DelayTimer = this.Registers[opcode.XNibble];
         // Fx1E: I += Vx
         else if (opcode.UNibble == 0xF && opcode.LowerByte == 0x1E)
             this.AddressPointer += this.Registers[opcode.XNibble];
         // Fx29: I = FontAddress[Vx]
         else if (opcode.UNibble == 0xF && opcode.LowerByte == 0x29)
             this.AddressPointer = (ushort)(this.Registers[opcode.XNibble] * 0x5);
+        // Fx33: BCD(V[x])
+        else if (opcode.UNibble == 0xF && opcode.LowerByte == 0x33)
+        {
+            memory[this.AddressPointer + 0] = (byte)(this.Registers[opcode.XNibble]  / 100);
+            memory[this.AddressPointer + 1] = (byte)((this.Registers[opcode.XNibble] /  10) % 10);
+            memory[this.AddressPointer + 2] = (byte)((this.Registers[opcode.XNibble] % 100) % 10);
+        }
         // Fx55: I = Vx [where 0 : x] ; I++
         else if (opcode.UNibble == 0xF && opcode.LowerByte == 0x55)
         {
@@ -151,12 +179,17 @@ public sealed class CPU
         {
             throw new NotSupportedException($"Unknown OpCode found: [PC=0x{this.ProgramCounter.ToString("X4")}]: 0x{opcode}");
         }
+        // TODO: Separate Delay/Sound Timers (?)
+        this.DelayTimer--;
+        this.SoundTimer--;
     }
     /* Properties */
     public ushort ProgramCounter { get; private set; } = 0;
     public byte[] Registers { get; private set; } = new byte[16];
     public ushort AddressPointer { get; private set; } = 0;
     public byte StackPointer { get; private set; } = 0;
+    public byte DelayTimer { get; private set; } = 0;
+    public byte SoundTimer { get; private set; } = 0;
     //public byte StackPointer { get; private set; } = 0;
     public ushort[] Stack { get; private set; } = new ushort[16];
     /* Sub-Classes */
