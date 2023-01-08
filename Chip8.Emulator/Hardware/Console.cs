@@ -53,9 +53,6 @@ public class Console
     public void Tick()
     {
         this.CPU.Tick(this.Memory, this.GFXBuffer, this.Inputs);
-        // Inputs
-        for (var i = 0; i < this.Inputs.Length; ++i)
-            this.Inputs[i] = false;
     }
     /* Static Properties */
     private readonly static byte[] FONTSET = {

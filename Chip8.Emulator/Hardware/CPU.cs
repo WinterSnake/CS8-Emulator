@@ -89,6 +89,13 @@ public sealed class CPU
         // 8xy2: Vx &= Vy
         else if (opcode.UNibble == 0x8 && opcode.LNibble == 0x2)
             this.Registers[opcode.XNibble] &= this.Registers[opcode.YNibble];
+        // 8xy4: Vx += Vy
+        else if (opcode.UNibble == 0x8 && opcode.LNibble == 0x4)
+            this.Registers[opcode.XNibble] += this.Registers[opcode.YNibble];
+        // 8xy5: Vx -= Vy
+        else if (opcode.UNibble == 0x8 && opcode.LNibble == 0x5)
+            this.Registers[opcode.XNibble] -= this.Registers[opcode.YNibble];
+        // 9xy0: Vx != Vy
         else if (opcode.UNibble == 0x9 && opcode.LNibble == 0x0)
         {
             if (this.Registers[opcode.XNibble] != this.Registers[opcode.YNibble])
@@ -97,6 +104,9 @@ public sealed class CPU
         // Annn: I = NNN
         else if (opcode.UNibble == 0xA)
             this.AddressPointer = opcode.Address;
+        // Cxyn: Vx = rand() & NN
+        else if (opcode.UNibble == 0xC)
+            this.Registers[opcode.XNibble] = (byte)((rand.Next() % (0xFF + 1)) & opcode.LowerByte);
         // Dxyn: Display x=Vx ; y=Vy; width=8 ; height = n
         else if (opcode.UNibble == 0xD)
         {
@@ -111,9 +121,9 @@ public sealed class CPU
                     var posx = x + this.Registers[opcode.XNibble];
                     if ((pixels & (0x80 >> x)) == 0)
                         continue;
-                    bool _set = graphicsBuffer[posx, posy];
+                    if (graphicsBuffer[posx, posy])
+                        this.Registers[0xF] = 1;
                     graphicsBuffer[posx, posy] = !graphicsBuffer[posx, posy];
-                    this.Registers[0xF] = Convert.ToByte(_set == graphicsBuffer[posx, posy]);
                 }
             }
         }
@@ -180,8 +190,10 @@ public sealed class CPU
             throw new NotSupportedException($"Unknown OpCode found: [PC=0x{this.ProgramCounter.ToString("X4")}]: 0x{opcode}");
         }
         // TODO: Separate Delay/Sound Timers (?)
-        this.DelayTimer--;
-        this.SoundTimer--;
+        if (this.DelayTimer > 0)
+            this.DelayTimer--;
+        if (this.SoundTimer > 0)
+            this.SoundTimer--;
     }
     /* Properties */
     public ushort ProgramCounter { get; private set; } = 0;
@@ -190,6 +202,7 @@ public sealed class CPU
     public byte StackPointer { get; private set; } = 0;
     public byte DelayTimer { get; private set; } = 0;
     public byte SoundTimer { get; private set; } = 0;
+    private readonly Random rand = new Random();
     //public byte StackPointer { get; private set; } = 0;
     public ushort[] Stack { get; private set; } = new ushort[16];
     /* Sub-Classes */
