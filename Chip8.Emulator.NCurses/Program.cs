@@ -44,7 +44,7 @@ internal class Program
         var cpuWindow = terminal.Screen.Window(new(graphicsWindow.Size.Width + 1, 0, 41, graphicsWindow.Size.Height));
         // [Refresh]
         terminal.Screen.Refresh();
-        graphicsWindow.ColorMixture = terminal.Colors.MixColors(StandardColor.White, StandardColor.Black);
+        graphicsWindow.ColorMixture = terminal.Colors.MixColors(StandardColor.Black, StandardColor.White);
         graphicsWindow.DrawBorder();
         var active    = terminal.Colors.MixColors(StandardColor.White, StandardColor.Red);
         var nonactive = terminal.Colors.MixColors(StandardColor.White, StandardColor.Black);
@@ -85,7 +85,7 @@ internal class Program
         }
     }
     public static void UpdateDraw(
-        byte[,] graphicsBuffer, ITerminalSurface surface, ColorMixture active, ColorMixture nonactive
+        bool[,] graphicsBuffer, ITerminalSurface surface, ColorMixture active, ColorMixture nonactive
     )
     {
         surface.CaretLocation = new(1, 1);
@@ -93,7 +93,7 @@ internal class Program
         {
             for (var x = 0; x < graphicsBuffer.GetLength(0); ++x)
             {
-                surface.ColorMixture = graphicsBuffer[x, y] > 0 ? active : nonactive;
+                surface.ColorMixture = graphicsBuffer[x, y] ? active : nonactive;
                 surface.WriteText(" ");
             }
             surface.CaretLocation = new(1, y + 1);

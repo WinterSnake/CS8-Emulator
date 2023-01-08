@@ -77,6 +77,6 @@ public class Console
     private readonly ushort _ROMStartAddress;
     public readonly CPU CPU;
     public readonly byte[] Memory = new byte[4096];
-    public readonly byte[,] GFXBuffer = new byte[64, 32];
+    public readonly bool[,] GFXBuffer = new bool[64, 32];
     public readonly bool[] Inputs = new bool[16];
 }

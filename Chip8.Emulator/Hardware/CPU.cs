@@ -25,7 +25,7 @@ public sealed class CPU
         for (var i = 0; i < this.Registers.Length; ++i)
             this.Registers[i] = 0;
     }
-    public void Tick(byte[] memory, byte[,] graphicsBuffer, bool[] inputs)
+    public void Tick(byte[] memory, bool[,] graphicsBuffer, bool[] inputs)
     {
         OpCode opcode = new OpCode(memory[this.ProgramCounter], memory[this.ProgramCounter + 1]);
         this.ProgramCounter += 2;
@@ -35,7 +35,7 @@ public sealed class CPU
             for (var x = 0; x < graphicsBuffer.GetLength(0); ++x)
             {
                 for (var y = 0; y < graphicsBuffer.GetLength(1); ++y)
-                    graphicsBuffer[x, y] = 0;
+                    graphicsBuffer[x, y] = false;
             }
         }
         // 00EE: return
@@ -71,6 +71,12 @@ public sealed class CPU
             if (this.Registers[opcode.XNibble] != opcode.LowerByte)
                 this.ProgramCounter += 2;
         }
+        // 5xy0
+        else if (opcode.UNibble == 0x5)
+        {
+            if (this.Registers[opcode.XNibble] == this.Registers[opcode.YNibble])
+                this.ProgramCounter += 2;
+        }
         // 6xnn: Vx = nn
         else if (opcode.UNibble == 0x6)
             this.Registers[opcode.XNibble] = opcode.LowerByte;
@@ -91,8 +97,26 @@ public sealed class CPU
         // Annn: I = NNN
         else if (opcode.UNibble == 0xA)
             this.AddressPointer = opcode.Address;
-        // TODO: Dxyn: Display x=Vx ; y=Vy; width=8 ; height = n
-        else if (opcode.UNibble == 0xD) {}
+        // Dxyn: Display x=Vx ; y=Vy; width=8 ; height = n
+        else if (opcode.UNibble == 0xD)
+        {
+            ushort pixels;
+            this.Registers[0xF] = 0;
+            for (var y = 0; y < opcode.LNibble; ++ y)
+            {
+                var posy = y + this.Registers[opcode.YNibble];
+                pixels = memory[this.AddressPointer + y];
+                for(var x = 0; x < 8; ++x)
+                {
+                    var posx = x + this.Registers[opcode.XNibble];
+                    if ((pixels & (0x80 >> x)) == 0)
+                        continue;
+                    bool _set = graphicsBuffer[posx, posy];
+                    graphicsBuffer[posx, posy] = !graphicsBuffer[posx, posy];
+                    this.Registers[0xF] = Convert.ToByte(_set == graphicsBuffer[posx, posy]);
+                }
+            }
+        }
         // Ex9E: if (key[x])
         else if (opcode.UNibble == 0xE && opcode.LowerByte == 0x9E)
         {
