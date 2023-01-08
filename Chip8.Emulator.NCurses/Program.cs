@@ -35,7 +35,7 @@ internal class Program
         // Setup ncurses
         using var terminal = new Terminal(
             CursesBackend.Load(), new TerminalOptions(
-                UseMouse: false, CaretMode: CaretMode.Invisible, ManagedWindows: true
+                UseMouse: false, CaretMode: CaretMode.Invisible, ManagedWindows: false
             )
         );
         var graphicsWindow = terminal.Screen.Window(new(0, 0, 66, 33));
@@ -44,20 +44,13 @@ internal class Program
         var Chip8 = new Chip8::Console();
         Chip8.LoadROM(args[0]);
         // Draw
+        terminal.Screen.Refresh();
         graphicsWindow.ColorMixture = terminal.Colors.MixColors(StandardColor.White, StandardColor.Black);
         graphicsWindow.DrawBorder();
         graphicsWindow.ColorMixture = terminal.Colors.MixColors(StandardColor.White, StandardColor.Red);
-        graphicsWindow.CaretLocation = new(1, 1);
-        for (var y = 0; y < 32; ++y)
-        {
-            for (var x = 0; x < 64; ++x)
-            {
-                graphicsWindow.WriteText(" ");
-            }
-            graphicsWindow.CaretLocation = new(1, y + 1);
-        }
-        terminal.Screen.Refresh();
-        graphicsWindow.Refresh();
+        UpdateDraw(Chip8.GFXBuffer, graphicsWindow);
+        if (drawCPU)
+            UpdateCPUDraw(Chip8, cpuWindow);
         // Event handler
         foreach (var @event in terminal.Events.Listen(terminal.Screen))
         {
@@ -67,9 +60,14 @@ internal class Program
             else if (@event is KeyEvent { Char.Value: 'C', Modifiers: ModifierKey.Ctrl })
                 break;
             // Single Step Debugging
-            else if (@event is KeyEvent { Char.Value: 'n' } && singleStep) { Chip8.Tick(); UpdateCPUDraw(Chip8, cpuWindow); }
-            // Manual CPU Draw Update
-            else if (@event is KeyEvent { Char.Value: 'u' } && drawCPU) { UpdateCPUDraw(Chip8, cpuWindow); }
+            else if (@event is KeyEvent { Char.Value: 'n' } && singleStep)
+            {
+                Chip8.Tick();
+                UpdateDraw(Chip8.GFXBuffer, graphicsWindow);
+                // Debug CPU Draw
+                if (drawCPU)
+                    UpdateCPUDraw(Chip8, cpuWindow);
+            }
             // Handle Inputs
             else if (@event is KeyEvent { Modifiers: ModifierKey.None })
             {
@@ -81,6 +79,19 @@ internal class Program
                 }
             }
         }
+    }
+    public static void UpdateDraw(byte[,] graphicsBuffer, ITerminalSurface surface)
+    {
+        surface.CaretLocation = new(1, 1);
+        for (var y = 0; y < graphicsBuffer.GetLength(1); ++y)
+        {
+            for (var x = 0; x < graphicsBuffer.GetLength(0); ++x)
+            {
+                surface.WriteText(" ");
+            }
+            surface.CaretLocation = new(1, y + 1);
+        }
+        surface.Refresh();
     }
     public static void UpdateCPUDraw(Chip8::Console console, ITerminalSurface surface)
     {
