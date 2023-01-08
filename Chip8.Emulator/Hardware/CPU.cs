@@ -30,9 +30,9 @@ public sealed class CPU
         OpCode opcode = new OpCode(memory[this.ProgramCounter], memory[this.ProgramCounter + 1]);
         this.ProgramCounter += 2;
         // TODO: 00E0: clear
-        //if (opcode == 0x00E0) {}
+        if (opcode == 0x00E0) {}
         // 00EE: return
-        if (opcode == 0x00EE)
+        else if (opcode == 0x00EE)
         {
             // Handle stack underflow
             if (this.StackPointer <= 0)
@@ -85,7 +85,7 @@ public sealed class CPU
         else if (opcode.UNibble == 0xA)
             this.AddressPointer = opcode.Address;
         // TODO: Dxyn: Display x=Vx ; y=Vy; width=8 ; height = n
-        //else if (opcode.UNibble == 0xD) {}
+        else if (opcode.UNibble == 0xD) {}
         // Ex9E: if (key[x])
         else if (opcode.UNibble == 0xE && opcode.LowerByte == 0x9E)
         {
@@ -126,6 +126,7 @@ public sealed class CPU
     public byte[] Registers { get; private set; } = new byte[16];
     public ushort AddressPointer { get; private set; } = 0;
     public byte StackPointer { get; private set; } = 0;
+    //public byte StackPointer { get; private set; } = 0;
     public ushort[] Stack { get; private set; } = new ushort[16];
     /* Sub-Classes */
     private struct OpCode
