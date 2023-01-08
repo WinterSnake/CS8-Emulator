@@ -38,17 +38,21 @@ internal class Program
                 UseMouse: false, CaretMode: CaretMode.Invisible, ManagedWindows: false
             )
         );
+        // [Graphics Window]
         var graphicsWindow = terminal.Screen.Window(new(0, 0, 66, 33));
+        // [CPU Debug Window]
         var cpuWindow = terminal.Screen.Window(new(graphicsWindow.Size.Width + 1, 0, 41, graphicsWindow.Size.Height));
+        // [Refresh]
+        terminal.Screen.Refresh();
+        graphicsWindow.ColorMixture = terminal.Colors.MixColors(StandardColor.White, StandardColor.Black);
+        graphicsWindow.DrawBorder();
+        var active    = terminal.Colors.MixColors(StandardColor.White, StandardColor.Red);
+        var nonactive = terminal.Colors.MixColors(StandardColor.White, StandardColor.Black);
         // Create Chip8
         var Chip8 = new Chip8::Console();
         Chip8.LoadROM(args[0]);
         // Draw
-        terminal.Screen.Refresh();
-        graphicsWindow.ColorMixture = terminal.Colors.MixColors(StandardColor.White, StandardColor.Black);
-        graphicsWindow.DrawBorder();
-        graphicsWindow.ColorMixture = terminal.Colors.MixColors(StandardColor.White, StandardColor.Red);
-        UpdateDraw(Chip8.GFXBuffer, graphicsWindow);
+        UpdateDraw(Chip8.GFXBuffer, graphicsWindow, active, nonactive);
         if (drawCPU)
             UpdateCPUDraw(Chip8, cpuWindow);
         // Event handler
@@ -63,7 +67,7 @@ internal class Program
             else if (@event is KeyEvent { Char.Value: 'n' } && singleStep)
             {
                 Chip8.Tick();
-                UpdateDraw(Chip8.GFXBuffer, graphicsWindow);
+                UpdateDraw(Chip8.GFXBuffer, graphicsWindow, active, nonactive);
                 // Debug CPU Draw
                 if (drawCPU)
                     UpdateCPUDraw(Chip8, cpuWindow);
@@ -80,13 +84,16 @@ internal class Program
             }
         }
     }
-    public static void UpdateDraw(byte[,] graphicsBuffer, ITerminalSurface surface)
+    public static void UpdateDraw(
+        byte[,] graphicsBuffer, ITerminalSurface surface, ColorMixture active, ColorMixture nonactive
+    )
     {
         surface.CaretLocation = new(1, 1);
         for (var y = 0; y < graphicsBuffer.GetLength(1); ++y)
         {
             for (var x = 0; x < graphicsBuffer.GetLength(0); ++x)
             {
+                surface.ColorMixture = graphicsBuffer[x, y] > 0 ? active : nonactive;
                 surface.WriteText(" ");
             }
             surface.CaretLocation = new(1, y + 1);
