@@ -9,6 +9,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using Sharpie;
 using Sharpie.Abstractions;
 using Sharpie.Backend;
@@ -30,7 +31,7 @@ internal class Program
             return;
         }
         // TODO: Parse additional arguments (single-step, debug)
-        bool singleStep = true;
+        bool singleStep = false;
         bool drawCPU = true;
         // Setup ncurses
         using var terminal = new Terminal(
@@ -55,11 +56,25 @@ internal class Program
         UpdateDraw(Chip8.GFXBuffer, graphicsWindow, active, nonactive);
         if (drawCPU)
             UpdateCPUDraw(Chip8, cpuWindow);
+        bool running = true;
         // Event handler
         foreach (var @event in terminal.Events.Listen(terminal.Screen))
         {
             // Run Emulator Thread
-            if (@event is StartEvent) {}
+            if (@event is StartEvent && !singleStep)
+            {
+                new Thread(() => {
+                    while (running)
+                    {
+                        Chip8.Tick();
+                        UpdateDraw(Chip8.GFXBuffer, graphicsWindow, active, nonactive);
+                        if (drawCPU)
+                            UpdateCPUDraw(Chip8, cpuWindow);
+                        // Lower Clockrate
+                        Thread.Sleep(5);
+                    }
+                }).Start();
+            }
             // Process End
             else if (@event is KeyEvent { Char.Value: 'C', Modifiers: ModifierKey.Ctrl })
                 break;
@@ -75,6 +90,10 @@ internal class Program
             // Handle Inputs
             else if (@event is KeyEvent { Modifiers: ModifierKey.None })
             {
+                // Inputs
+                for (var i = 0; i < Chip8.Inputs.Length; ++i)
+                    Chip8.SetKey((byte)i, false);
+                // Set
                 char key = Char.ToUpper((char)(@event as KeyEvent).Char.Value);
                 if (Program.KeyInputs.Contains(key))
                 {
@@ -83,6 +102,7 @@ internal class Program
                 }
             }
         }
+        running = false;
     }
     public static void UpdateDraw(
         bool[,] graphicsBuffer, ITerminalSurface surface, ColorMixture active, ColorMixture nonactive
@@ -111,7 +131,7 @@ internal class Program
         surface.WriteText($"| I: 0x{console.CPU.AddressPointer.ToString("X4")}");
         surface.CaretLocation = new(0, surface.CaretLocation.Y + 1);
         // Stack
-        surface.WriteText("Stack: [");
+        surface.WriteText($"Delay: {console.CPU.DelayTimer} | Sound: {console.CPU.SoundTimer} | Stack: [");
         for (var i = 0; i < console.CPU.Stack.Length; ++i)
         {
             // Empty Stack
@@ -153,6 +173,13 @@ internal class Program
         }
         string registers = String.Join("\n", registerBuilder);
         surface.WriteText(registers);
+        surface.CaretLocation = new(0, surface.CaretLocation.Y + 1);
+        for (var i = 0; i < console.Inputs.Length; ++i)
+        {
+            surface.WriteText($"{Convert.ToByte(console.Inputs[i])}");
+            if (i < console.Inputs.Length - 1)
+                surface.WriteText(",");
+        }
         surface.Refresh();
     }
     /* Static Properties */
