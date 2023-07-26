@@ -70,6 +70,9 @@ internal class Program
                         UpdateDraw(Chip8.GFXBuffer, graphicsWindow, active, nonactive);
                         if (drawCPU)
                             UpdateCPUDraw(Chip8, cpuWindow);
+                        // Inputs
+                        for (var i = 0; i < Chip8.Inputs.Length; ++i)
+                            Chip8.SetKey((byte)i, false);
                         // Lower Clockrate
                         Thread.Sleep(5);
                     }
@@ -90,9 +93,6 @@ internal class Program
             // Handle Inputs
             else if (@event is KeyEvent { Modifiers: ModifierKey.None })
             {
-                // Inputs
-                for (var i = 0; i < Chip8.Inputs.Length; ++i)
-                    Chip8.SetKey((byte)i, false);
                 // Set
                 char key = Char.ToUpper((char)(@event as KeyEvent).Char.Value);
                 if (Program.KeyInputs.Contains(key))

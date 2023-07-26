@@ -6,6 +6,7 @@
 #pragma warning disable CS0660, CS0661
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 
 internal class Program
@@ -25,6 +26,7 @@ internal class Program
         }
         // Load ROM
         byte[] bin = File.ReadAllBytes(args[0]);
+        List<string> output = new List<string>();
         // Decode ROM
         for (var i = 0; i < bin.Length; i += 2)
         {
