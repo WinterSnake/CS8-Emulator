@@ -21,21 +21,18 @@ internal static class Program
 		}
 		Chip8.LoadROM(args[0]);
 		// Initialize Raylib
-        Raylib.InitWindow(Chip8.GFXBuffer.GetLength(0) * SCALE, Chip8.GFXBuffer.GetLength(1) * SCALE, "Chip8 Emulator");
+        Raylib.InitWindow(Chip8.GFXMemory.GetLength(0) * SCALE, Chip8.GFXMemory.GetLength(1) * SCALE, "Chip8 Emulator");
 
         while (!Raylib.WindowShouldClose())
         {
 			// Render
             Raylib.BeginDrawing();
 				Raylib.ClearBackground(Color.White);
-				// Draw gfx buffer
-				for (var x = 0; x < Chip8.GFXBuffer.GetLength(0); ++x)
-				{
-					for (var y = 0; y < Chip8.GFXBuffer.GetLength(1); ++y)
-					{
-						if (Chip8.GFXBuffer[x, y]) Raylib.DrawRectangle(x * SCALE, y * SCALE, SCALE, SCALE, Color.Red);
-					}
-				}
+				// Draw gfx memory
+				for (var x = 0; x < Chip8.GFXMemory.GetLength(0); ++x)
+					for (var y = 0; y < Chip8.GFXMemory.GetLength(1); ++y)
+						if (Chip8.GFXMemory[x, y])
+							Raylib.DrawRectangle(x * SCALE, y * SCALE, SCALE, SCALE, Color.Red);
             Raylib.EndDrawing();
 			// Inputs
 			// CPU
