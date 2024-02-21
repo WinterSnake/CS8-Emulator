@@ -27,59 +27,41 @@ public class CPU
 	}
 	public void Tick()
 	{
+		if (this.DelayTimer > 0)
+			this.DelayTimer--;
 		this.OpCode = new OpCode(
 			this.Console.Memory[this.ProgramCounter++],
 			this.Console.Memory[this.ProgramCounter++]
 		);
-		#if DEBUG
-		#endif
-		if (this.OpCode == 0x00E0)
-			this.ClearScreen();
-		else if (this.OpCode == 0x00EE)
-			this.Return();
-		else
-			switch(this.OpCode.UNibble)
-			{
-				case 0x1: this.Jump(); break;
-				case 0x2: this.Call(); break;
-				case 0x3: this.SkipEqual(); break;
-				case 0x4: this.SkipNotEqual(); break;
-				case 0x6: this.LoadXValue(); break;
-				case 0x7: this.AddXValue(); break;
-				case 0x8:
-				{
-					switch(this.OpCode.LNibble)
-					{
-
-						case 0x0: this.LoadXY(); break;
-						default: throw new ArgumentException($"Unknown opcode: '{this.OpCode}'");
-					}
-				} break;
-				case 0xA: this.LoadI(); break;
-				case 0xC: this.Random(); break;
-				case 0xD: this.Draw(); break;
-				case 0xE:
-				{
-					switch(this.OpCode.LByte)
-					{
-						default: throw new ArgumentException($"Unknown opcode: '{this.OpCode}'");
-					}
-				} break;
-				case 0xF:
-				{
-					switch(this.OpCode.LByte)
-					{
-						case 0x07: this.LoadXD(); break;
-						case 0x15: this.LoadDX(); break;
-						case 0x1E: this.AddIX(); break;
-						default: throw new ArgumentException($"Unknown opcode: '{this.OpCode}'");
-					}
-				} break;
-				default: throw new ArgumentException($"Unknown opcode: '{this.OpCode}'");
-			}
-		this.DelayTimer--;
+		switch(this.OpCode.UNibble)
+		{
+			case 0x0: this.OpCode0___(); break;
+			case 0x1: this.Jump(); break;
+			case 0x2: this.Call(); break;
+			case 0x3: this.SkipEqual(); break;
+			case 0x4: this.SkipNotEqual(); break;
+			case 0x6: this.LoadXValue(); break;
+			case 0x7: this.AddXValue(); break;
+			case 0x8: this.OpCode8___(); break;
+			case 0xA: this.LoadI(); break;
+			case 0xC: this.Random(); break;
+			case 0xD: this.Draw(); break;
+			case 0xE: this.OpCodeE___(); break;
+			case 0xF: this.OpCodeF___(); break;
+			default: throw new ArgumentException($"Unknown opcode '{this.OpCode}'");
+		}
 	}
 	// Instructions
+	// -0x0___
+	private void OpCode0___()
+	{
+		switch (this.OpCode.Address)
+		{
+			case 0x0E0: this.ClearScreen(); break;
+			case 0x0EE: this.Return(); break;
+			default: throw new ArgumentException($"Unknown opcode '{this.OpCode}'");
+		}
+	}
 	// -0x00E0
 	private void ClearScreen()
 	{
@@ -112,6 +94,15 @@ public class CPU
 	private void LoadXValue() => this.Registers[this.OpCode.XNibble] = this.OpCode.LByte;
 	// -0x7xkk
 	private void AddXValue() => this.Registers[this.OpCode.XNibble] += this.OpCode.LByte;
+	// -0x8___
+	private void OpCode8___()
+	{
+		switch (this.OpCode.LNibble)
+		{
+			case 0x0: this.LoadXY(); break;
+			default: throw new ArgumentException($"Unknown opcode '{this.OpCode}'");
+		}
+	}
 	// -0x8xy0
 	private void LoadXY() => this.Registers[this.OpCode.XNibble] = this.Registers[this.OpCode.YNibble];
 	// -0xAnnn
@@ -137,6 +128,25 @@ public class CPU
 					this.Registers[0xF] = 1;
 				this.Console.GFXMemory[posX, posY] = !this.Console.GFXMemory[posX, posY];
 			}
+		}
+	}
+	// -0xE___
+	private void OpCodeE___()
+	{
+		switch (this.OpCode.LByte)
+		{
+			default: throw new ArgumentException($"Unknown opcode '{this.OpCode}'");
+		}
+	}
+	// -0xF___
+	private void OpCodeF___()
+	{
+		switch (this.OpCode.LByte)
+		{
+			case 0x07: this.LoadXD(); break;
+			case 0x15: this.LoadDX(); break;
+			case 0x1E: this.AddIX(); break;
+			default: throw new ArgumentException($"Unknown opcode '{this.OpCode}'");
 		}
 	}
 	// -0xFx07
