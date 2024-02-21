@@ -1,6 +1,6 @@
 /*
-	Chip8 Emulator: Assembly
-	- OpCode
+	Chip8 Emulator: Hardware
+	- Console
 
 	Written By: Ryan Smith
 */
