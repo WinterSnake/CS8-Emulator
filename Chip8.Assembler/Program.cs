@@ -1,15 +1,17 @@
 ﻿/*
-	Chip8 Emulator: Disassembler
+	Chip8 Emulator: Assembler
 
 	Written By: Ryan Smith
 */
 using System;
+using System.IO;
 
 internal static class Program
 {
 	/* Static Methods */
 	private static void Main(string[] args)
 	{
-		Console.WriteLine("Chip8 Disassembler");
 	}
+	/* Class Properties */
+	internal static ushort StartOffsetAddress = 0x200;
 }
