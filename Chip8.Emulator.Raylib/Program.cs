@@ -38,14 +38,21 @@ internal static class Program
             Raylib.EndDrawing();
 			/// Inputs
 			for (var i = 0; i < Program.INPUTS.Length; ++i)
+			{
 				Program.Chip8.Inputs[i] = Raylib.IsKeyDown(Program.INPUTS[i]);
+				//Console.WriteLine($"Key[{i}] = {Program.Chip8.Inputs[i]}");
+			}
 			/// Console
-			Chip8.Tick();
+			if (Raylib.IsKeyPressed(KeyboardKey.Zero))
+				Program.STEPMODE = !Program.STEPMODE;
+			if (!Program.STEPMODE || (Program.STEPMODE && Raylib.IsKeyPressed(KeyboardKey.Space)))
+				Chip8.Tick();
         }
 
 		Raylib.CloseWindow();
 	}
 	/* Class Properties */
+	private static bool STEPMODE = false;
 	private static readonly int SCALE = 20;
 	private static readonly Chip8.Console Chip8 = new Chip8.Console();
 	private static readonly ImmutableArray<KeyboardKey> INPUTS = ImmutableArray.Create(
