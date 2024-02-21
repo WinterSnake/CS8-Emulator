@@ -15,11 +15,6 @@ public struct OpCode
 	public OpCode(byte upper, byte lower) { this.Instruction = (ushort)((upper << 8) | (lower << 0)); }
 	/* Instance Methods */
 	public override string ToString() => $"0x{this.Instruction:X4}";
-	public override bool Equals(object o) => false;
-	public override int GetHashCode() => this.Instruction.GetHashCode();
-	/* Static Methods */
-	public static bool operator == (OpCode op, ushort @value) => op.Instruction == @value;
-	public static bool operator != (OpCode op, ushort @value) => op.Instruction != @value;
 	/* Properties */
 	public readonly ushort Instruction;
 	public ushort Address { get { return (ushort)((this.Instruction & 0x0FFF) >>  0); }}
