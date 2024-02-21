@@ -20,12 +20,14 @@ internal static class Program
 			return;
 		}
 		Chip8.LoadROM(args[0]);
-		// Initialize Raylib
+
         Raylib.InitWindow(Chip8.GFXMemory.GetLength(0) * SCALE, Chip8.GFXMemory.GetLength(1) * SCALE, "Chip8 Emulator");
+
+		Raylib.SetTargetFPS(60);
 
         while (!Raylib.WindowShouldClose())
         {
-			// Render
+			/// Render
             Raylib.BeginDrawing();
 				Raylib.ClearBackground(Color.White);
 				// Draw gfx memory
@@ -34,14 +36,22 @@ internal static class Program
 						if (Chip8.GFXMemory[x, y])
 							Raylib.DrawRectangle(x * SCALE, y * SCALE, SCALE, SCALE, Color.Red);
             Raylib.EndDrawing();
-			// Inputs
-			// CPU
+			/// Inputs
+			for (var i = 0; i < Program.INPUTS.Length; ++i)
+				Program.Chip8.Inputs[i] = Raylib.IsKeyDown(Program.INPUTS[i]);
+			/// Console
 			Chip8.Tick();
         }
 
 		Raylib.CloseWindow();
 	}
 	/* Class Properties */
-	private static Chip8.Console Chip8 = new Chip8.Console();
-	private static int SCALE = 20;
+	private static readonly int SCALE = 20;
+	private static readonly Chip8.Console Chip8 = new Chip8.Console();
+	private static readonly ImmutableArray<KeyboardKey> INPUTS = ImmutableArray.Create(
+		KeyboardKey.One, KeyboardKey.Two, KeyboardKey.Three, KeyboardKey.Four,
+		KeyboardKey.Q,   KeyboardKey.W,   KeyboardKey.E,     KeyboardKey.R,
+		KeyboardKey.A,   KeyboardKey.S,   KeyboardKey.D,     KeyboardKey.F,
+		KeyboardKey.Z,   KeyboardKey.X,   KeyboardKey.C,     KeyboardKey.V
+	);
 }
