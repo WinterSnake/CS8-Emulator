@@ -29,6 +29,9 @@ public class CPU
 	{
 		if (this.DelayTimer > 0)
 			this.DelayTimer--;
+		if (this.SoundTimer > 0)
+			this.SoundTimer--;
+		// Instruction handling
 		this.OpCode = new OpCode(
 			this.Console.Memory[this.ProgramCounter++],
 			this.Console.Memory[this.ProgramCounter++]
@@ -36,81 +39,71 @@ public class CPU
 		switch(this.OpCode.UNibble)
 		{
 			case 0x0: this.OpCode0___(); break;
-			case 0x1: this.Jump(); break;
-			case 0x2: this.Call(); break;
-			case 0x3: this.SkipEqual(); break;
-			case 0x4: this.SkipNotEqual(); break;
-			case 0x6: this.LoadXValue(); break;
-			case 0x7: this.AddXValue(); break;
+			case 0x1: this.OpCode1nnn(); break;  // Jump
+			case 0x2: this.OpCode2nnn(); break;  // Call
+			case 0x3: this.OpCode3xkk(); break;  // Skip > v[X] ==   kk
+			case 0x4: this.OpCode4xkk(); break;  // Skip > v[X] !=   kk
+			case 0x5: this.OpCode5xy0(); break;  // Skip > v[X] == v[Y]
+			case 0x6: this.OpCode6xkk(); break;  // v[X] = kk
+			case 0x7: this.OpCode7xkk(); break;  // x[X] += kk
 			case 0x8: this.OpCode8___(); break;
-			case 0xA: this.LoadI(); break;
-			case 0xC: this.Random(); break;
-			case 0xD: this.Draw(); break;
+			case 0x9: this.OpCode9xy0(); break;  // Skip > v[X] != v[Y]
+			case 0xA: this.OpCodeAnnn(); break;  // I = nnn
+			case 0xC: this.OpCodeCxkk(); break;  // v[X] = RND & kk
+			case 0xD: this.OpCodeDxyn(); break;  // Draw
 			case 0xE: this.OpCodeE___(); break;
 			case 0xF: this.OpCodeF___(); break;
 			default: throw new ArgumentException($"Unknown opcode '{this.OpCode}'");
 		}
 	}
 	// Instructions
-	// -0x0___
 	private void OpCode0___()
 	{
 		switch (this.OpCode.Address)
 		{
-			case 0x0E0: this.ClearScreen(); break;
-			case 0x0EE: this.Return(); break;
+			case 0x0E0: this.OpCode00E0(); break;  // Clear Screen
+			case 0x0EE: this.OpCode00EE(); break;  // Return
 			default: throw new ArgumentException($"Unknown opcode '{this.OpCode}'");
 		}
 	}
-	// -0x00E0
-	private void ClearScreen()
+	private void OpCode00E0()
 	{
 		for (var x = 0; x < this.Console.GFXMemory.GetLength(0); ++x)
 			for (var y = 0; y < this.Console.GFXMemory.GetLength(1); ++y)
 				this.Console.GFXMemory[x, y] = false;
 	}
-	// -0x00EE
-	private void Return()
+	private void OpCode00EE()
 	{
 		if (this.StackPointer <= 0)
 			throw new ArgumentOutOfRangeException("Chip8 CPU Stack Underflow");
 		this.ProgramCounter = this.Stack[--this.StackPointer];
 	}
-	// -0x1nnn
-	private void Jump() => this.ProgramCounter = this.OpCode.Address;
-	// -0x2nnn
-	public void Call()
+	private void OpCode1nnn() => this.ProgramCounter = this.OpCode.Address;
+	private void OpCode2nnn()
 	{
 		if (this.StackPointer > this.Stack.Length)
 			throw new ArgumentOutOfRangeException("Chip8 CPU Stack Overflow");
 		this.Stack[this.StackPointer++] = this.ProgramCounter;
 		this.ProgramCounter = this.OpCode.Address;
 	}
-	// -0x3xkk
-	public void SkipEqual() => this.ProgramCounter += (ushort)(this.Registers[this.OpCode.XNibble] == this.OpCode.LByte ? 2 : 0);
-	// -0x4xkk
-	public void SkipNotEqual() => this.ProgramCounter += (ushort)(this.Registers[this.OpCode.XNibble] != this.OpCode.LByte ? 2 : 0);
-	// -0x6xkk
-	private void LoadXValue() => this.Registers[this.OpCode.XNibble] = this.OpCode.LByte;
-	// -0x7xkk
-	private void AddXValue() => this.Registers[this.OpCode.XNibble] += this.OpCode.LByte;
-	// -0x8___
+	private void OpCode3xkk() => this.ProgramCounter += (ushort)(this.Registers[this.OpCode.XNibble] == this.OpCode.LByte ? 2 : 0);
+	private void OpCode4xkk() => this.ProgramCounter += (ushort)(this.Registers[this.OpCode.XNibble] != this.OpCode.LByte ? 2 : 0);
+	private void OpCode5xy0() => this.ProgramCounter += (ushort)(this.Registers[this.OpCode.XNibble] == this.Registers[this.OpCode.YNibble] ? 2 : 0);
+	private void OpCode6xkk() => this.Registers[this.OpCode.XNibble] = this.OpCode.LByte;
+	private void OpCode7xkk() => this.Registers[this.OpCode.XNibble] += this.OpCode.LByte;
 	private void OpCode8___()
 	{
 		switch (this.OpCode.LNibble)
 		{
-			case 0x0: this.LoadXY(); break;
+			case 0x0: this.OpCode8xy0(); break; // v[X] = v[Y]
 			default: throw new ArgumentException($"Unknown opcode '{this.OpCode}'");
 		}
 	}
-	// -0x8xy0
-	private void LoadXY() => this.Registers[this.OpCode.XNibble] = this.Registers[this.OpCode.YNibble];
-	// -0xAnnn
-	private void LoadI() => this.AddressPointer = this.OpCode.Address;
-	// -0xCxkk
-	private void Random() => this.Registers[this.OpCode.XNibble] = (byte)(this.Console.Random.Next(256) & this.OpCode.LByte);
-	// -0xDxyk
-	private void Draw()
+	private void OpCode8xy0() => this.Registers[this.OpCode.XNibble] = this.Registers[this.OpCode.YNibble];
+	private void OpCode9xy0() => this.ProgramCounter += (ushort)(this.Registers[this.OpCode.XNibble] != this.Registers[this.OpCode.YNibble] ? 2 : 0);
+	private void OpCodeAnnn() => this.AddressPointer = this.OpCode.Address;
+	private void OpCodeCxkk() => this.Registers[this.OpCode.XNibble] = (byte)(this.Console.Random.Next(256) & this.OpCode.LByte);
+	private void OpCodeDxyn()
 	{
 		this.Registers[0xF] = 0;
 		var height = this.OpCode.LNibble;
@@ -130,7 +123,6 @@ public class CPU
 			}
 		}
 	}
-	// -0xE___
 	private void OpCodeE___()
 	{
 		switch (this.OpCode.LByte)
@@ -138,23 +130,19 @@ public class CPU
 			default: throw new ArgumentException($"Unknown opcode '{this.OpCode}'");
 		}
 	}
-	// -0xF___
 	private void OpCodeF___()
 	{
 		switch (this.OpCode.LByte)
 		{
-			case 0x07: this.LoadXD(); break;
-			case 0x15: this.LoadDX(); break;
-			case 0x1E: this.AddIX(); break;
+			case 0x07: this.OpCodeFx07(); break;  // v[X] = Delay
+			case 0x15: this.OpCodeFx15(); break;  // Delay = v[X]
+			case 0x1E: this.OpCodeFx1E(); break;  // I += v[X]
 			default: throw new ArgumentException($"Unknown opcode '{this.OpCode}'");
 		}
 	}
-	// -0xFx07
-	private void LoadXD() => this.Registers[this.OpCode.XNibble] = this.DelayTimer;
-	// -0xFx15
-	private void LoadDX() => this.DelayTimer = this.Registers[this.OpCode.XNibble];
-	// -0xFx1E
-	private void AddIX() => this.AddressPointer += this.Registers[this.OpCode.XNibble];
+	private void OpCodeFx07() => this.Registers[this.OpCode.XNibble] = this.DelayTimer;
+	private void OpCodeFx15() => this.DelayTimer = this.Registers[this.OpCode.XNibble];
+	private void OpCodeFx1E() => this.AddressPointer += this.Registers[this.OpCode.XNibble];
 	/* Properties */
 	public ushort ProgramCounter { get; private set; }
 	public readonly byte[] Registers = new byte[16];
@@ -162,6 +150,7 @@ public class CPU
 	public byte StackPointer { get; private set; } = 0;
 	public readonly ushort[] Stack = new ushort[16];
 	public byte DelayTimer { get; private set; } = 0;
+	public byte SoundTimer { get; private set; } = 0;
 	private OpCode OpCode;
 	private readonly Console Console;
 }
