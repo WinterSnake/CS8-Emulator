@@ -36,14 +36,13 @@ public class CPU
 			this.Console.Memory[this.ProgramCounter++],
 			this.Console.Memory[this.ProgramCounter++]
 		);
-		System.Console.WriteLine($"[{this.ProgramCounter - 2:X4}]: {this.OpCode}");
 		switch(this.OpCode.UNibble)
 		{
 			case 0x0: this.OpCode0___(); break;
 			case 0x1: this.OpCode1nnn(); break;  // Jump
 			case 0x2: this.OpCode2nnn(); break;  // Call
-			case 0x3: this.OpCode3xkk(); break;  // Skip > v[X] ==   kk
-			case 0x4: this.OpCode4xkk(); break;  // Skip > v[X] !=   kk
+			case 0x3: this.OpCode3xkk(); break;  // Skip > v[X] == kk
+			case 0x4: this.OpCode4xkk(); break;  // Skip > v[X] != kk
 			case 0x5: this.OpCode5xy0(); break;  // Skip > v[X] == v[Y]
 			case 0x6: this.OpCode6xkk(); break;  // v[X] = kk
 			case 0x7: this.OpCode7xkk(); break;  // x[X] += kk
@@ -103,6 +102,8 @@ public class CPU
 			case 0x4: this.OpCode8xy4(); break; // v[X] += v[Y]
 			case 0x5: this.OpCode8xy5(); break; // v[X] -= v[Y]
 			case 0x6: this.OpCode8xy6(); break; // v[X] = v[Y] >> 1
+			case 0x7: this.OpCode8xy7(); break; // v[X] = v[Y] - v[X]
+			case 0xE: this.OpCode8xyE(); break; // v[X] = v[Y] << 1
 			default: throw new ArgumentException($"Unknown opcode '{this.OpCode}'");
 		}
 	}
@@ -112,26 +113,43 @@ public class CPU
 	private void OpCode8xy3() => this.Registers[this.OpCode.XNibble] ^= this.Registers[this.OpCode.YNibble];
 	private void OpCode8xy4()
 	{
-		this.Registers[0xF] = 0;
 		var rX = this.Registers[this.OpCode.XNibble];
 		var rY = this.Registers[this.OpCode.YNibble];
-		if (rY > 0xFF - rX)
-			this.Registers[0xF] = 1;
-		this.Registers[this.OpCode.XNibble] += rY;
+		this.Registers[0xF] = (byte)((rY > 0xFF - rX) ? 1 : 0);
+		if (this.OpCode.XNibble != 0xF)
+			this.Registers[this.OpCode.XNibble] += rY;
 	}
 	private void OpCode8xy5()
 	{
 		var rX = this.Registers[this.OpCode.XNibble];
 		var rY = this.Registers[this.OpCode.YNibble];
-		this.Registers[0xF] = (byte)(rX > rY ? 1 : 0);
-		this.Registers[this.OpCode.XNibble] -= rY;
+		this.Registers[0xF] = (byte)(rY > rX ? 0 : 1);
+		if (this.OpCode.XNibble != 0xF)
+			this.Registers[this.OpCode.XNibble] -= rY;
 	}
 	private void OpCode8xy6()
 	{
 		var rY = this.Registers[this.OpCode.YNibble];
 		this.Registers[this.OpCode.XNibble] = rY;
 		this.Registers[0xF] = (byte)(rY & 0b00000001);
-		this.Registers[this.OpCode.XNibble] >>= 1;
+		if (this.OpCode.XNibble != 0xF)
+			this.Registers[this.OpCode.XNibble] >>= 1;
+	}
+	private void OpCode8xy7()
+	{
+		var rX = this.Registers[this.OpCode.XNibble];
+		var rY = this.Registers[this.OpCode.YNibble];
+		this.Registers[0xF] = (byte)(rX > rY ? 0 : 1);
+		if (this.OpCode.XNibble != 0xF)
+			this.Registers[this.OpCode.XNibble] = (byte)(rY - rX);
+	}
+	private void OpCode8xyE()
+	{
+		var rY = this.Registers[this.OpCode.YNibble];
+		this.Registers[this.OpCode.XNibble] = rY;
+		this.Registers[0xF] = (byte)((rY & 0b10000000) >> 7);
+		if (this.OpCode.XNibble != 0xF)
+			this.Registers[this.OpCode.XNibble] <<= 1;
 	}
 	private void OpCode9xy0() => this.ProgramCounter += (ushort)(this.Registers[this.OpCode.XNibble] != this.Registers[this.OpCode.YNibble] ? 2 : 0);
 	private void OpCodeAnnn() => this.AddressPointer = this.OpCode.Address;
@@ -186,6 +204,8 @@ public class CPU
 			case 0x1E: this.OpCodeFx1E(); break;  // I += v[X]
 			case 0x29: this.OpCodeFx29(); break;  // I = font[X]
 			case 0x33: this.OpCodeFx33(); break;  // I[0..2] = BCD(v[X])
+			case 0x55: this.OpCodeFx55(); break;  // I[0..X] = v[0..X]
+			case 0x65: this.OpCodeFx65(); break;  // v[0..X] = I[0..X]
 			default: throw new ArgumentException($"Unknown opcode '{this.OpCode}'");
 		}
 	}
@@ -199,6 +219,16 @@ public class CPU
 		this.Console.Memory[this.AddressPointer + 0] = (byte)(rX / 100);
 		this.Console.Memory[this.AddressPointer + 1] = (byte)(rX / 10 % 10);
 		this.Console.Memory[this.AddressPointer + 2] = (byte)(rX % 10);
+	}
+	private void OpCodeFx55()
+	{
+		for (var i = 0; i <= this.OpCode.XNibble; ++i)
+			this.Console.Memory[this.AddressPointer + i] = this.Registers[i];
+	}
+	private void OpCodeFx65()
+	{
+		for (var i = 0; i <= this.OpCode.XNibble; ++i)
+			this.Registers[i] = this.Console.Memory[this.AddressPointer + i];
 	}
 	/* Properties */
 	public ushort ProgramCounter { get; private set; }

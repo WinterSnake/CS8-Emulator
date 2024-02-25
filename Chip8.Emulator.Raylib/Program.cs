@@ -30,18 +30,11 @@ internal static class Program
 			/// Render
             Raylib.BeginDrawing();
 				Raylib.ClearBackground(Color.White);
-				// Draw gfx memory
-				for (var x = 0; x < Chip8.GFXMemory.GetLength(0); ++x)
-					for (var y = 0; y < Chip8.GFXMemory.GetLength(1); ++y)
-						if (Chip8.GFXMemory[x, y])
-							Raylib.DrawRectangle(x * SCALE, y * SCALE, SCALE, SCALE, Color.Red);
+				Program.RenderGFXMemory();
             Raylib.EndDrawing();
 			/// Inputs
 			for (var i = 0; i < Program.INPUTS.Length; ++i)
-			{
 				Program.Chip8.Inputs[i] = Raylib.IsKeyDown(Program.INPUTS[i]);
-				//Console.WriteLine($"Key[{i}] = {Program.Chip8.Inputs[i]}");
-			}
 			/// Console
 			if (Raylib.IsKeyPressed(KeyboardKey.Zero))
 				Program.STEPMODE = !Program.STEPMODE;
@@ -50,6 +43,13 @@ internal static class Program
         }
 
 		Raylib.CloseWindow();
+	}
+	private static void RenderGFXMemory()
+	{
+		for (var x = 0; x < Chip8.GFXMemory.GetLength(0); ++x)
+			for (var y = 0; y < Chip8.GFXMemory.GetLength(1); ++y)
+				if (Chip8.GFXMemory[x, y])
+					Raylib.DrawRectangle(x * SCALE, y * SCALE, SCALE, SCALE, Color.Red);
 	}
 	/* Class Properties */
 	private static bool STEPMODE = false;
