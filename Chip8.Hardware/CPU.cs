@@ -27,6 +27,7 @@ public class CPU
 	}
 	public void Tick()
 	{
+		// Timers
 		if (this.DelayTimer > 0)
 			this.DelayTimer--;
 		if (this.SoundTimer > 0)
@@ -39,8 +40,8 @@ public class CPU
 		switch(this.OpCode.UNibble)
 		{
 			case 0x0: this.OpCode0___(); break;
-			case 0x1: this.OpCode1nnn(); break;  // Jump
-			case 0x2: this.OpCode2nnn(); break;  // Call
+			case 0x1: this.OpCode1nnn(); break;  // Jump nnn
+			case 0x2: this.OpCode2nnn(); break;  // Call nnn
 			case 0x3: this.OpCode3xkk(); break;  // Skip > v[X] == kk
 			case 0x4: this.OpCode4xkk(); break;  // Skip > v[X] != kk
 			case 0x5: this.OpCode5xy0(); break;  // Skip > v[X] == v[Y]
@@ -49,6 +50,7 @@ public class CPU
 			case 0x8: this.OpCode8___(); break;
 			case 0x9: this.OpCode9xy0(); break;  // Skip > v[X] != v[Y]
 			case 0xA: this.OpCodeAnnn(); break;  // I = nnn
+			case 0xB: this.OpCodeBnnn(); break;  // Jump nnn + V[0]
 			case 0xC: this.OpCodeCxkk(); break;  // v[X] = RND & kk
 			case 0xD: this.OpCodeDxyn(); break;  // Draw
 			case 0xE: this.OpCodeE___(); break;
@@ -153,6 +155,7 @@ public class CPU
 	}
 	private void OpCode9xy0() => this.ProgramCounter += (ushort)(this.Registers[this.OpCode.XNibble] != this.Registers[this.OpCode.YNibble] ? 2 : 0);
 	private void OpCodeAnnn() => this.AddressPointer = this.OpCode.Address;
+	private void OpCodeBnnn() => this.ProgramCounter = (ushort)(this.OpCode.Address + this.Registers[0x0]);
 	private void OpCodeCxkk() => this.Registers[this.OpCode.XNibble] = (byte)(this.Console.Random.Next(256) & this.OpCode.LByte);
 	private void OpCodeDxyn()
 	{
