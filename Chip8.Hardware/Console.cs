@@ -30,10 +30,10 @@ public class Console
 	public void Tick() => this.CPU.Tick();
 	/* Properties */
 	public readonly CPU CPU;
-	public bool[] Inputs = new bool[16];
+	public readonly bool[] Inputs = new bool[16];
 	public readonly byte[]  Memory = new byte[4096];
     public readonly bool[,] GFXMemory = new bool[64, 32];
-	public readonly Random Random = new Random();
+	internal readonly Random Random = new Random();
 	private ushort _StartAddress;
 	/* Class Properties */
     private readonly static byte[] FONTSET = {
